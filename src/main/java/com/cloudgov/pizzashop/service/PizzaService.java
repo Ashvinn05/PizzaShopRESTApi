@@ -23,8 +23,6 @@ public class PizzaService {
     public Flux<Pizza> getAllPizzas() {
         log.debug("Fetching all pizzas from database");
         return pizzaRepository.findAll()
-            .delayElements(Duration.ofSeconds(1))
-            .doOnNext(pizza -> log.info("Processing pizza {} on thread {}", pizza.getName(), Thread.currentThread().getName()))
             .doOnNext(pizza -> log.debug("Found pizza: {}", pizza))
             .switchIfEmpty(Flux.empty())
             .doOnError(e -> log.error("Error fetching pizzas: {}", e.getMessage(), e));
