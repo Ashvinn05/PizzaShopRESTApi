@@ -90,10 +90,7 @@ public class OrderService {
                 long duration = System.currentTimeMillis() - startTime;
                 log.info("[END] getOrderById - Successfully fetched order. Duration: {}ms", duration);
             })
-            .doOnError(e -> {
-                log.error("[ERROR] getOrderById - Error fetching order with id: {}", id, e);
-                throw new RuntimeException("Failed to fetch order", e);
-            });
+            .doOnError(e -> log.error("[ERROR] getOrderById - Error fetching order with id: {}", id, e));
     }
 
     /**
@@ -147,10 +144,7 @@ public class OrderService {
                 long duration = System.currentTimeMillis() - startTime;
                 log.info("[END] updateOrderStatus - Successfully updated order status. Duration: {}ms", duration);
             })
-            .doOnError(e -> {
-                log.error("[ERROR] updateOrderStatus - Error updating order status: {}", id, e);
-                throw new RuntimeException("Failed to update order status", e);
-            });
+            .doOnError(e -> log.error("[ERROR] updateOrderStatus - Error updating order status: {}", id, e));
     }
 
     /**
@@ -171,9 +165,6 @@ public class OrderService {
                 long duration = System.currentTimeMillis() - startTime;
                 log.info("[END] cancelOrder - Successfully canceled order. Duration: {}ms", duration);
             })
-            .doOnError(e -> {
-                log.error("[ERROR] cancelOrder - Error canceling order: {}", id, e);
-                throw new RuntimeException("Failed to cancel order", e);
-            });
+            .doOnError(e -> log.error("[ERROR] cancelOrder - Error canceling order: {}", id, e));
     }
 }

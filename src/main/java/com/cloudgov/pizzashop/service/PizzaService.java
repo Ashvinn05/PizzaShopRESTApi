@@ -64,10 +64,8 @@ public class PizzaService {
                 long duration = System.currentTimeMillis() - startTime;
                 log.info("[END] getPizzaById - Successfully fetched pizza. Duration: {}ms", duration);
             })
-            .doOnError(e -> {
-                log.error("[ERROR] getPizzaById - Error fetching pizza with id: {}", id, e);
-                throw new RuntimeException("Failed to fetch pizza", e);
-            });
+            .doOnError(e -> log.error("[ERROR] getPizzaById - Error fetching pizza with id: {}", id, e))
+            .onErrorMap(e -> e instanceof NotFoundException ? e : new RuntimeException("Failed to fetch pizza", e));
     }
 
     /**
