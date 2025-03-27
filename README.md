@@ -36,7 +36,7 @@ Available at `/doc/API-Doc.md`
 
 ### 1️⃣ **Reactive Architecture**  
 
-The system uses **reactive types** (`Mono` and `Flux`) throughout the order management system, ensuring:  
+The system uses **reactive types** (`Mono` and `Flux`) throughout the system, ensuring:  
 
 ✅ **Non-blocking database operations** – Uses Spring Data MongoDB Reactive  
 ✅ **Efficient handling of multiple concurrent requests** – Asynchronous processing  
@@ -126,18 +126,11 @@ This application follows a **clean, layered architecture**:
 🔹 **Spring Data MongoDB Reactive** – MongoDB integration  
 🔹 **Project Reactor** – Core reactive programming library  
 🔹 **Lombok** – Reduces boilerplate code  
-🔹 **Test Containers** – For integration testing  
 🔹 **JUnit 5** – Testing framework  
 🔹 **Mockito** – Mocking framework  
-
----
-
-## 🧪 Testing  
-
-🛠️ **Unit Tests** – For service layer functionality  
-🐹 **Integration Tests** – Uses Test Containers for MongoDB  
-⚡ **Reactive Testing** – Uses Reactor Test’s `StepVerifier`  
-🎮 **Mocking** – Utilizes Mockito for dependency injection  
+🔹 **Spring Boot Actuator** – Monitoring and management  
+🔹 **Spring Boot Validation** – Data validation  
+🔹 **Spring Boot DevTools** – Development tools  
 
 ---
 
@@ -146,10 +139,32 @@ This application follows a **clean, layered architecture**:
 📌 **Language**: Java 17  
 📌 **Framework**: Spring Boot 3.4.4  
 📌 **Database**: MongoDB (Reactive)  
-📌 **Testing**: JUnit 5, Mockito, Test Containers  
+📌 **Testing**: JUnit 5, Mockito,   
 📌 **Build Tool**: Maven  
 📌 **Logging**: SLF4J  
 📌 **Code Generation**: Lombok  
+📌 **Monitoring**: Spring Boot Actuator  
+📌 **Development Tools**: Spring Boot DevTools  
+
+---
+
+## 🛠️ Development Tools  
+🛠️ **Spring Boot DevTools** – Hot reloading and improved development experience  
+📊 **Spring Boot Actuator** – Production-ready features for monitoring and managing your application  
+🔍 **Actuator Endpoints**:  
+- `/actuator/health` – Application health status  
+- `/actuator/metrics` – Application metrics  
+- `/actuator/logs` – Log management  
+- `/actuator/beans` – Spring bean information  
+
+---
+
+## 🧪 Testing  
+
+🛠️ **Unit Tests** – For service layer functionality  
+⚡ **Reactive Testing** – Uses Reactor Test’s `StepVerifier`  
+🎮 **Mocking** – Utilizes Mockito for dependency injection  
+
 
 ---
 
