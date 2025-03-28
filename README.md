@@ -13,6 +13,7 @@ A modern, **reactive REST API** for managing a pizza shop's operations. Built wi
 2. Maven installed
 3. MongoDB installed and running
 4. Git installed (for cloning the repository)
+5. Docker installed (for Docker environments)
 
 ### 🏷️ Project Setup
 1. Clone the repository:
@@ -22,9 +23,35 @@ cd pizzashop
 ```
 
 ### ▶️ Build & Run  
+
+#### 💻 Local Development
 ```bash
 mvn clean install
 mvn spring-boot:run
+```
+
+#### 🐳 Docker Development Environment
+```bash
+# 1. First create the environment file from template
+cp .example.env.txt .env.dev
+
+# 2. Edit .env.dev with your development environment settings
+
+# 3. Build and run Docker containers
+docker-compose --env-file .env.dev build
+docker-compose --env-file .env.dev up
+```
+
+#### 🐳 Docker Production Environment
+```bash
+# 1. First create the environment file from template
+cp .example.env.txt .env.prod
+
+# 2. Edit .env.prod with your production environment settings
+
+# 3. Build and run Docker containers
+docker-compose --env-file .env.prod build
+docker-compose --env-file .env.prod up
 ```
 
 ### 📝 API Documentation  
