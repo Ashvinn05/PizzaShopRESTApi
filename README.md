@@ -70,6 +70,9 @@ The system uses **reactive types** (`Mono` and `Flux`) throughout the system, en
 ✅ **Automatic backpressure handling** – Prevents memory overload  
 ✅ **Reduced memory footprint** – Streams data instead of loading everything into memory  
 ✅ **Better CPU utilization** – Optimized non-blocking operations  
+✅ **Improved scalability** – Handles thousands of concurrent users with minimal resources  
+✅ **Resource optimization** – Reduces thread pool size and memory usage  
+✅ **Faster response times** – Non-blocking operations allow for quicker response to user requests  
 
 💡 **Example of Reactive Pattern Usage**:  
 ```java
@@ -94,8 +97,11 @@ The application implements **comprehensive error handling mechanisms**:
 🚩 **Custom Exception Handling** – Uses `NotFoundException` for missing resources  
 ⚠️ **Validation Exceptions** – Throws `IllegalArgumentException` for invalid inputs  
 🔄 **Runtime Exception Wrapping** – Provides meaningful messages  
+🔄 **Global Exception Handler** – Centralized error handling with consistent response format  
+� **Detailed Error Logging** – Comprehensive logging for debugging  
+🔄 **User-friendly Error Messages** – Clear and helpful error messages for clients  
 
-💡 **Example of Error Handling**:  
+�💡 **Example of Error Handling**:  
 ```java
 // From OrderService.java
 public Mono<Order> createOrder(Order newOrder) {
@@ -103,6 +109,13 @@ public Mono<Order> createOrder(Order newOrder) {
         throw new IllegalArgumentException("At least one pizza is required");
     }
     // ...
+}
+
+// Global Exception Handler
+@ExceptionHandler({NotFoundException.class, IllegalArgumentException.class})
+public ResponseEntity<ErrorResponse> handleException(Exception ex) {
+    ErrorResponse error = new ErrorResponse(ex.getMessage());
+    return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(error);
 }
 ```
 
@@ -115,6 +128,10 @@ The system implements **multiple layers of validation**:
 🛡️ **Model-Level Validation** – Uses Jakarta Validation (`@NotNull`, `@NotBlank`, `@Size`)  
 📝 **Service-Level Validation** – Implements custom validation logic  
 💛 **Global Exception Handling** – Ensures consistent error responses  
+✅ **Input Validation** – Validates all incoming requests  
+✅ **Business Rule Validation** – Enforces business rules at service level  
+✅ **Database Constraints** – Ensures data integrity at storage level  
+✅ **Type Safety** – Uses proper data types to prevent runtime errors  
 
 💡 **Example of Model Validation**:  
 ```java
@@ -130,6 +147,19 @@ public class Order {
     
     @NotNull(message = "Timestamp is required")
     private Date timestamp;
+    
+    @Valid
+    private Customer customer;
+}
+
+// Custom validation annotation
+@Constraint(validatedBy = PizzaValidator.class)
+@Target({ ElementType.FIELD })
+@Retention(RetentionPolicy.RUNTIME)
+public @interface ValidPizza {
+    String message() default "Invalid pizza selection";
+    Class<?>[] groups() default {};
+    Class<? extends Payload>[] payload() default {};
 }
 ```
 
