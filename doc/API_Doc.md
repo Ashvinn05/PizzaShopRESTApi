@@ -25,9 +25,17 @@ http://localhost:8080
       {
         "id": "6423e15d5f8b9a0b5c6a3e15",
         "name": "Margherita",
-        "description": "Classic pizza with tomato sauce and fresh mozzarella",
+        "description": "Classic pizza with tomato sauce and fresh mozzarella. Perfect for cheese lovers.",
         "price": 12.99,
-        "toppings": ["tomato sauce", "fresh mozzarella"],
+        "toppings": ["tomato sauce", "fresh mozzarella", "basil"],
+        "sizeOptions": ["small", "medium", "large"]
+      },
+      {
+        "id": "6423e15d5f8b9a0b5c6a3e16",
+        "name": "Pepperoni",
+        "description": "Classic Italian-style pizza with pepperoni, tomato sauce, and mozzarella cheese.",
+        "price": 14.99,
+        "toppings": ["tomato sauce", "fresh mozzarella", "pepperoni", "red onions"],
         "sizeOptions": ["small", "medium", "large"]
       }
     ]
@@ -52,9 +60,9 @@ http://localhost:8080
     "data": {
       "id": "6423e15d5f8b9a0b5c6a3e15",
       "name": "Margherita",
-      "description": "Classic pizza with tomato sauce and fresh mozzarella",
+      "description": "Classic pizza with tomato sauce and fresh mozzarella. Perfect for cheese lovers.",
       "price": 12.99,
-      "toppings": ["tomato sauce", "fresh mozzarella"],
+      "toppings": ["tomato sauce", "fresh mozzarella", "basil"],
       "sizeOptions": ["small", "medium", "large"]
     }
   }
@@ -72,21 +80,27 @@ http://localhost:8080
   ```json
   {
     "name": "Pepperoni",
-    "description": "Classic pizza with tomato sauce, fresh mozzarella, and pepperoni",
+    "description": "Classic Italian-style pizza with pepperoni, tomato sauce, and mozzarella cheese.",
     "price": 14.99,
-    "toppings": ["tomato sauce", "fresh mozzarella", "pepperoni"],
+    "toppings": ["tomato sauce", "fresh mozzarella", "pepperoni", "red onions"],
     "sizeOptions": ["small", "medium", "large"]
   }
   ```
+- **Validation Rules**:
+  - `name`: Required, must be between 1 and 100 characters
+  - `description`: Required, must be between 1 and 500 characters
+  - `price`: Required, must be a valid number
+  - `toppings`: Required, must be an array of strings
+  - `sizeOptions`: Required, must be an array of strings
 - **Example**:
   ```bash
   curl -X POST http://localhost:8080/pizzas \
     -H "Content-Type: application/json" \
     -d '{
       "name": "Pepperoni",
-      "description": "Classic pizza with tomato sauce, fresh mozzarella, and pepperoni",
+      "description": "Classic Italian-style pizza with pepperoni, tomato sauce, and mozzarella cheese.",
       "price": 14.99,
-      "toppings": ["tomato sauce", "fresh mozzarella", "pepperoni"],
+      "toppings": ["tomato sauce", "fresh mozzarella", "pepperoni", "red onions"],
       "sizeOptions": ["small", "medium", "large"]
     }'
   ```
@@ -101,21 +115,27 @@ http://localhost:8080
   ```json
   {
     "name": "Pepperoni",
-    "description": "Classic pizza with tomato sauce, fresh mozzarella, and pepperoni",
+    "description": "Classic Italian-style pizza with pepperoni, tomato sauce, and mozzarella cheese.",
     "price": 14.99,
-    "toppings": ["tomato sauce", "fresh mozzarella", "pepperoni"],
+    "toppings": ["tomato sauce", "fresh mozzarella", "pepperoni", "red onions"],
     "sizeOptions": ["small", "medium", "large"]
   }
   ```
+- **Validation Rules**:
+  - `name`: Required, must be between 1 and 100 characters
+  - `description`: Required, must be between 1 and 500 characters
+  - `price`: Required, must be a valid number
+  - `toppings`: Required, must be an array of strings
+  - `sizeOptions`: Required, must be an array of strings
 - **Example**:
   ```bash
   curl -X PUT http://localhost:8080/pizzas/6423e15d5f8b9a0b5c6a3e15 \
     -H "Content-Type: application/json" \
     -d '{
       "name": "Pepperoni",
-      "description": "Classic pizza with tomato sauce, fresh mozzarella, and pepperoni",
+      "description": "Classic Italian-style pizza with pepperoni, tomato sauce, and mozzarella cheese.",
       "price": 14.99,
-      "toppings": ["tomato sauce", "fresh mozzarella", "pepperoni"],
+      "toppings": ["tomato sauce", "fresh mozzarella", "pepperoni", "red onions"],
       "sizeOptions": ["small", "medium", "large"]
     }'
   ```
@@ -153,8 +173,8 @@ http://localhost:8080
       {
         "id": "6423e15d5f8b9a0b5c6a3e16",
         "status": "pending",
-        "timestamp": "2025-03-28T16:23:03.000+05:30",
         "pizzas": ["6423e15d5f8b9a0b5c6a3e15"],
+        "timestamp": "2025-03-29T10:18:43+05:30",
         "customerName": "John Doe",
         "customerEmail": "john.doe@example.com",
         "customerPhone": "+12345678901",
@@ -186,8 +206,8 @@ http://localhost:8080
       {
         "id": "6423e15d5f8b9a0b5c6a3e16",
         "status": "pending",
-        "timestamp": "2025-03-28T16:23:03.000+05:30",
         "pizzas": ["6423e15d5f8b9a0b5c6a3e15"],
+        "timestamp": "2025-03-29T10:18:43+05:30",
         "customerName": "John Doe",
         "customerEmail": "john.doe@example.com",
         "customerPhone": "+12345678901",
@@ -218,8 +238,8 @@ http://localhost:8080
     "data": {
       "id": "6423e15d5f8b9a0b5c6a3e16",
       "status": "pending",
-      "timestamp": "2025-03-28T16:23:03.000+05:30",
       "pizzas": ["6423e15d5f8b9a0b5c6a3e15"],
+      "timestamp": "2025-03-29T10:18:43+05:30",
       "customerName": "John Doe",
       "customerEmail": "john.doe@example.com",
       "customerPhone": "+12345678901",
@@ -244,7 +264,7 @@ http://localhost:8080
   {
     "pizzas": ["6423e15d5f8b9a0b5c6a3e15"],
     "status": "pending",
-    "timestamp": "2025-03-29T13:33:35.000+05:30",
+    "timestamp": "2025-03-29T10:20:39+05:30",
     "customerName": "John Doe",
     "customerEmail": "john.doe@example.com",
     "customerPhone": "+12345678901",
@@ -257,7 +277,7 @@ http://localhost:8080
 - **Validation Rules**:
   - `pizzas`: Required, must contain at least one valid MongoDB ObjectId (24 hex characters)
   - `status`: Required, must be one of: "pending", "preparing", "ready", "delivered", "cancelled"
-  - `timestamp`: Required
+  - `timestamp`: Required, must be a valid ISO 8601 timestamp
   - `customerName`: Optional, maximum length 100 characters
   - `customerEmail`: Optional, must be a valid email format
   - `customerPhone`: Optional, must be 10-15 digits, optionally starting with +
@@ -270,8 +290,8 @@ http://localhost:8080
     "data": {
       "id": "6423e15d5f8b9a0b5c6a3e16",
       "status": "pending",
-      "timestamp": "2025-03-29T13:33:35.000+05:30",
       "pizzas": ["6423e15d5f8b9a0b5c6a3e15"],
+      "timestamp": "2025-03-29T10:18:43+05:30",
       "customerName": "John Doe",
       "customerEmail": "john.doe@example.com",
       "customerPhone": "+12345678901",
@@ -289,7 +309,7 @@ http://localhost:8080
     -d '{
       "pizzas": ["6423e15d5f8b9a0b5c6a3e15"],
       "status": "pending",
-      "timestamp": "2025-03-29T13:33:35.000+05:30",
+      "timestamp": "2025-03-29T10:20:39+05:30",
       "customerName": "John Doe",
       "customerEmail": "john.doe@example.com",
       "customerPhone": "+12345678901",
@@ -314,7 +334,6 @@ http://localhost:8080
   ```
 - **Validation Rules**:
   - Status must be one of: "pending", "preparing", "ready", "delivered", "cancelled"
-  - Status transitions must follow this order: pending -> preparing -> ready -> delivered/cancelled
 - **Response**:
   ```json
   {
@@ -323,8 +342,8 @@ http://localhost:8080
     "data": {
       "id": "6423e15d5f8b9a0b5c6a3e16",
       "status": "preparing",
-      "timestamp": "2025-03-29T13:33:35.000+05:30",
       "pizzas": ["6423e15d5f8b9a0b5c6a3e15"],
+      "timestamp": "2025-03-29T10:18:43+05:30",
       "customerName": "John Doe",
       "customerEmail": "john.doe@example.com",
       "customerPhone": "+12345678901",
@@ -425,5 +444,3 @@ The API may return the following error responses:
     "message": "Order not found with id: 6423e15d5f8b9a0b5c6a3e16"
   }
   ```
-
-{{ ... }}

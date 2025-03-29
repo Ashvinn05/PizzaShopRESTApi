@@ -1,46 +1,46 @@
 [
     {
-        "pizzas": [],
+        "pizzas": ["6423e15d5f8b9a0b5c6a3e15"],
         "status": "pending",
         "timestamp": "2025-03-28T10:00:00Z",
         "customerName": "John Doe",
         "customerEmail": "john@example.com",
-        "customerPhone": "123-456-7890",
+        "customerPhone": "1234567890",
         "additionalAttributes": {
             "deliveryInstructions": "Leave at front door"
         }
     },
     {
-        "pizzas": [],
+        "pizzas": ["6423e15d5f8b9a0b5c6a3e16"],
         "status": "preparing",
         "timestamp": "2025-03-28T11:30:00Z",
         "customerName": "Jane Smith",
         "customerEmail": "jane@example.com",
-        "customerPhone": "987-654-3210",
+        "customerPhone": "9876543210",
         "additionalAttributes": {
             "specialRequest": "Extra cheese"
         }
     },
     {
-        "pizzas": [],
+        "pizzas": ["6423e15d5f8b9a0b5c6a3e17"],
         "status": "ready",
         "timestamp": "2025-03-28T12:15:00Z",
         "customerName": "Bob Johnson",
         "customerEmail": "bob@example.com",
-        "customerPhone": "555-123-4567",
+        "customerPhone": "5551234567",
         "additionalAttributes": {
             "pickupTime": "12:30 PM"
         }
     },
     {
-        "pizzas": [],
+        "pizzas": ["6423e15d5f8b9a0b5c6a3e18"],
         "status": "delivered",
         "timestamp": "2025-03-28T09:45:00Z",
         "customerName": "Alice Brown",
         "customerEmail": "alice@example.com",
-        "customerPhone": "444-555-6666",
+        "customerPhone": "4445556666",
         "additionalAttributes": {
-            "tipAmount": 5.00
+            "tipAmount": "5.00"
         }
     }
 ]

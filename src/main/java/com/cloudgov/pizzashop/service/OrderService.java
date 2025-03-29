@@ -1,5 +1,6 @@
 package com.cloudgov.pizzashop.service;
 
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
@@ -8,6 +9,7 @@ import org.slf4j.LoggerFactory;
 import com.cloudgov.pizzashop.model.Order;
 import com.cloudgov.pizzashop.repository.OrderRepository;
 import com.cloudgov.pizzashop.exception.NotFoundException;
+import com.cloudgov.pizzashop.service.PizzaService;
 import java.util.Date;
 
 /**
@@ -17,15 +19,19 @@ import java.util.Date;
 @Service
 public class OrderService {
     private final OrderRepository orderRepository;
+    private final PizzaService pizzaService;
     private final Logger log = LoggerFactory.getLogger(OrderService.class);
 
     /**
      * Constructor for OrderService.
      * 
      * @param orderRepository the order repository
+     * @param pizzaService the pizza service
      */
-    public OrderService(OrderRepository orderRepository) {
+    @Autowired
+    public OrderService(OrderRepository orderRepository, PizzaService pizzaService) {
         this.orderRepository = orderRepository;
+        this.pizzaService = pizzaService;
     }
 
     /**
@@ -114,11 +120,12 @@ public class OrderService {
 
     /**
      * Creates a new order.
-     * Validates that the order contains at least one pizza.
+     * Validates that the order contains at least one pizza and that all pizzas exist in the database.
      * 
      * @param newOrder the order to create
      * @return a Mono of the created order
      * @throws IllegalArgumentException if the order is invalid
+     * @throws NotFoundException if any pizza ID is not found
      */
     public Mono<Order> createOrder(Order newOrder) {
         log.info("[START] createOrder - Creating new order: {}", newOrder);
@@ -133,19 +140,27 @@ public class OrderService {
             newOrder.setStatus("PENDING");
         }
         
-        newOrder.setTimestamp(new Date());
-        return orderRepository.save(newOrder)
-            .doOnSuccess(order -> {
-                long duration = System.currentTimeMillis() - startTime;
-                log.info("[END] createOrder - Successfully created order. Duration: {}ms", duration);
-            })
-            .onErrorMap(e -> {
-                log.error("[ERROR] createOrder - Error creating order: {}", newOrder, e);
-                if (e instanceof IllegalArgumentException) {
-                    return e;
-                }
-                return new RuntimeException("Failed to create order", e);
-            });
+        // Validate that all pizza IDs exist
+        return Flux.fromIterable(newOrder.getPizzas())
+            .flatMap(pizzaId -> pizzaService.getPizzaById(pizzaId)
+                .doOnNext(pizza -> log.debug("Validated pizza: {}", pizza))
+                .switchIfEmpty(Mono.error(new NotFoundException("Pizza not found with id: " + pizzaId))))
+            .then()
+            .then(Mono.defer(() -> {
+                newOrder.setTimestamp(new Date());
+                return orderRepository.save(newOrder)
+                    .doOnSuccess(order -> {
+                        long duration = System.currentTimeMillis() - startTime;
+                        log.info("[END] createOrder - Successfully created order. Duration: {}ms", duration);
+                    })
+                    .onErrorMap(e -> {
+                        log.error("[ERROR] createOrder - Error creating order: {}", newOrder, e);
+                        if (e instanceof IllegalArgumentException) {
+                            return e;
+                        }
+                        return new RuntimeException("Failed to create order", e);
+                    });
+            }));
     }
 
     /**

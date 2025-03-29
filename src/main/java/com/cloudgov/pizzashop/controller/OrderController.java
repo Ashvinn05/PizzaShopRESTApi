@@ -148,10 +148,13 @@ public class OrderController {
             })
             .onErrorResume(e -> {
                 log.error("[ERROR] createOrder - Error creating order: {}", newOrder, e);
-                if (e instanceof IllegalArgumentException) {
-                    return Mono.error(e);
+                if (e instanceof NotFoundException) {
+                    return Mono.error(new NotFoundException("Pizza not found with id: " + e.getMessage()));
                 }
-                return Mono.error(new RuntimeException("Failed to create order", e));
+                if (e instanceof IllegalArgumentException) {
+                    return Mono.error(new IllegalArgumentException("Invalid request: " + e.getMessage()));
+                }
+                return Mono.error(new RuntimeException("Failed to create order: " + e.getMessage()));
             });
     }
 

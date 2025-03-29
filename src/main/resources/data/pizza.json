@@ -1,22 +1,22 @@
 [
     {
         "name": "Margherita",
-        "description": "Classic pizza with tomato sauce and mozzarella",
-        "toppings": ["tomato sauce", "mozzarella", "basil"],
+        "description": "Classic pizza with tomato sauce and fresh mozzarella",
+        "toppings": ["tomato sauce", "fresh mozzarella", "fresh basil"],
         "sizeOptions": ["small", "medium", "large"],
         "price": 8.99
     },
     {
         "name": "Pepperoni",
-        "description": "Spicy pizza with pepperoni slices",
-        "toppings": ["tomato sauce", "mozzarella", "pepperoni"],
+        "description": "Spicy pizza with tomato sauce, fresh mozzarella, and pepperoni slices",
+        "toppings": ["tomato sauce", "fresh mozzarella", "pepperoni"],
         "sizeOptions": ["small", "medium", "large"],
         "price": 9.99
     },
     {
         "name": "Veggie",
-        "description": "Healthy option with assorted vegetables",
-        "toppings": ["tomato sauce", "mozzarella", "bell peppers", "olives", "mushrooms"],
+        "description": "Healthy option with tomato sauce, fresh mozzarella, and assorted vegetables",
+        "toppings": ["tomato sauce", "fresh mozzarella", "fresh bell peppers", "olives", "mushrooms"],
         "sizeOptions": ["small", "medium", "large"],
         "price": 9.49
     }

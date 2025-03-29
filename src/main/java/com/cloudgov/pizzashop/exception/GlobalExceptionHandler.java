@@ -12,11 +12,14 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.web.server.ServerWebExchange;
 import org.springframework.web.server.ServerWebInputException;
+import org.springframework.web.server.UnsupportedMediaTypeStatusException;
+import org.springframework.web.server.MethodNotAllowedException;
+import org.springframework.http.HttpStatus;
+import org.springframework.web.server.ResponseStatusException;
 
 /**
  * Global exception handler for the application.
- * Handles various types of exceptions and provides consistent error responses.
- * Uses reactive Mono responses to maintain non-blocking behavior.
+ * Provides consistent error responses for all types of exceptions.
  */
 @RestControllerAdvice
 public class GlobalExceptionHandler {
@@ -91,6 +94,41 @@ public class GlobalExceptionHandler {
         
         String errorMessage = "Request body cannot be empty. Please provide valid request data.";
         return Mono.just(new ErrorResponse(HttpStatus.BAD_REQUEST.value(), errorMessage));
+    }
+
+    /**
+     * Handles invalid endpoints (404 Not Found).
+     * Logs the error and returns a 404 Not Found response with a clear message.
+     * 
+     * @param ex the Exception that occurred
+     * @param exchange the current ServerWebExchange
+     * @return a Mono containing an ErrorResponse with 404 status
+     */
+    @ExceptionHandler(ResponseStatusException.class)
+    @ResponseStatus(HttpStatus.NOT_FOUND)
+    public Mono<ErrorResponse> handleInvalidEndpoint(ResponseStatusException ex, ServerWebExchange exchange) {
+        String message = "Endpoint not found: " + exchange.getRequest().getPath();
+        log.error("[ERROR] {} - {}", exchange.getRequest().getPath(), message);
+        log.debug("Stack trace:", ex);
+        return Mono.just(new ErrorResponse(HttpStatus.NOT_FOUND.value(), message));
+    }
+
+    /**
+     * Handles invalid HTTP methods (405 Method Not Allowed).
+     * Logs the error and returns a 405 Method Not Allowed response with a clear message.
+     * 
+     * @param ex the Exception that occurred
+     * @param exchange the current ServerWebExchange
+     * @return a Mono containing an ErrorResponse with 405 status
+     */
+    @ExceptionHandler(MethodNotAllowedException.class)
+    @ResponseStatus(HttpStatus.METHOD_NOT_ALLOWED)
+    public Mono<ErrorResponse> handleInvalidMethod(MethodNotAllowedException ex, ServerWebExchange exchange) {
+        String message = String.format("Method %s not allowed for endpoint: %s. Allowed methods: %s", 
+            exchange.getRequest().getMethod().name(), exchange.getRequest().getPath(), ex.getSupportedMethods());
+        log.error("[ERROR] {} - {}", exchange.getRequest().getPath(), message);
+        log.debug("Stack trace:", ex);
+        return Mono.just(new ErrorResponse(HttpStatus.METHOD_NOT_ALLOWED.value(), message));
     }
 
     /**
