@@ -11,6 +11,8 @@ import org.slf4j.LoggerFactory;
 import com.cloudgov.pizzashop.service.PizzaService;
 import com.cloudgov.pizzashop.model.Pizza;
 import com.cloudgov.pizzashop.model.ApiResponse;
+import com.cloudgov.pizzashop.exception.NotFoundException;
+import org.springframework.web.server.ServerWebInputException;
 
 import java.util.List;
 
@@ -47,15 +49,14 @@ public class PizzaController {
         
         return pizzaService.getAllPizzas()
             .collectList()
-            .map(pizzas -> ApiResponse.success(pizzas))
-            .doOnNext(response -> log.debug("Found pizzas: {}", response.getData()))
-            .doOnError(e -> {
-                log.error("[ERROR] getAllPizzas - Error fetching pizzas", e);
-                throw new RuntimeException("Failed to fetch pizzas", e);
-            })
-            .doOnSuccess(response -> {
+            .map(pizzas -> {
                 long duration = System.currentTimeMillis() - startTime;
                 log.info("[END] getAllPizzas - Successfully fetched pizzas. Duration: {}ms", duration);
+                return ApiResponse.success(pizzas);
+            })
+            .onErrorMap(e -> {
+                log.error("[ERROR] getAllPizzas - Error fetching pizzas", e);
+                throw new RuntimeException("Failed to fetch pizzas", e);
             });
     }
 
@@ -73,13 +74,16 @@ public class PizzaController {
         long startTime = System.currentTimeMillis();
         
         return pizzaService.getPizzaById(id)
-            .map(pizza -> ApiResponse.success(pizza))
-            .doOnNext(response -> {
+            .map(pizza -> {
                 long duration = System.currentTimeMillis() - startTime;
                 log.info("[END] getPizzaById - Successfully fetched pizza. Duration: {}ms", duration);
+                return ApiResponse.success(pizza);
             })
-            .doOnError(e -> {
+            .onErrorMap(e -> {
                 log.error("[ERROR] getPizzaById - Error fetching pizza with id: {}", id, e);
+                if (e instanceof NotFoundException) {
+                    throw (NotFoundException) e;
+                }
                 throw new RuntimeException("Failed to fetch pizza", e);
             });
     }
@@ -95,18 +99,25 @@ public class PizzaController {
     @PostMapping
     @ResponseStatus(HttpStatus.CREATED)
     public Mono<ApiResponse<Pizza>> createPizza(@Valid @RequestBody Pizza newPizza) {
+        if (newPizza == null) {
+            throw new ServerWebInputException("Request body cannot be empty");
+        }
+        
         log.info("[START] createPizza - Handling POST request to create pizza: {}", newPizza);
         long startTime = System.currentTimeMillis();
         
         return pizzaService.createPizza(newPizza)
-            .map(pizza -> ApiResponse.success(pizza, "Pizza created successfully"))
-            .doOnNext(response -> {
+            .map(pizza -> {
                 long duration = System.currentTimeMillis() - startTime;
                 log.info("[END] createPizza - Successfully created pizza. Duration: {}ms", duration);
+                return ApiResponse.success(pizza, "Pizza created successfully");
             })
-            .doOnError(e -> {
+            .onErrorResume(e -> {
                 log.error("[ERROR] createPizza - Error creating pizza: {}", newPizza, e);
-                throw new RuntimeException("Failed to create pizza", e);
+                if (e instanceof IllegalArgumentException) {
+                    return Mono.error(e);
+                }
+                return Mono.error(new RuntimeException("Failed to create pizza", e));
             });
     }
 
@@ -120,18 +131,28 @@ public class PizzaController {
      */
     @PutMapping("/{id}")
     public Mono<ApiResponse<Pizza>> updatePizza(@PathVariable String id, @Valid @RequestBody Pizza updatedPizza) {
+        if (updatedPizza == null) {
+            throw new ServerWebInputException("Request body cannot be empty");
+        }
+        
         log.info("[START] updatePizza - Handling PUT request to update pizza with id: {}", id);
         long startTime = System.currentTimeMillis();
         
         return pizzaService.updatePizza(id, updatedPizza)
-            .map(pizza -> ApiResponse.success(pizza, "Pizza updated successfully"))
-            .doOnNext(response -> {
+            .map(pizza -> {
                 long duration = System.currentTimeMillis() - startTime;
                 log.info("[END] updatePizza - Successfully updated pizza. Duration: {}ms", duration);
+                return ApiResponse.success(pizza, "Pizza updated successfully");
             })
-            .doOnError(e -> {
-                log.error("[ERROR] updatePizza - Error updating pizza with id: {}", id, e);
-                throw new RuntimeException("Failed to update pizza", e);
+            .onErrorResume(e -> {
+                log.error("[ERROR] updatePizza - Error updating pizza: {}", id, e);
+                if (e instanceof NotFoundException) {
+                    return Mono.error(e);
+                }
+                if (e instanceof IllegalArgumentException) {
+                    return Mono.error(e);
+                }
+                return Mono.error(new RuntimeException("Failed to update pizza", e));
             });
     }
 
@@ -144,19 +165,29 @@ public class PizzaController {
      */
     @DeleteMapping("/{id}")
     @ResponseStatus(HttpStatus.NO_CONTENT)
-    public Mono<ApiResponse<String>> deletePizza(@PathVariable String id) {
-        log.info("[START] deletePizza - Handling DELETE request for pizza with id: {}", id);
+    public Mono<ApiResponse<Void>> deletePizza(@PathVariable String id) {
+        if (id == null || id.isEmpty()) {
+            throw new ServerWebInputException("ID parameter cannot be empty");
+        }
+        
+        log.info("[START] deletePizza - Handling DELETE request to delete pizza with id: {}", id);
         long startTime = System.currentTimeMillis();
         
         return pizzaService.deletePizza(id)
-            .then(Mono.just(ApiResponse.success("", "Pizza deleted successfully")))
+            .then(Mono.just(ApiResponse.success((Void)null, "Pizza deleted successfully")))
             .doOnNext(response -> {
                 long duration = System.currentTimeMillis() - startTime;
                 log.info("[END] deletePizza - Successfully deleted pizza. Duration: {}ms", duration);
             })
-            .doOnError(e -> {
+            .onErrorResume(e -> {
                 log.error("[ERROR] deletePizza - Error deleting pizza: {}", id, e);
-                throw new RuntimeException("Failed to delete pizza", e);
+                if (e instanceof NotFoundException) {
+                    return Mono.error(e);
+                }
+                if (e instanceof IllegalArgumentException) {
+                    return Mono.error(e);
+                }
+                return Mono.error(new RuntimeException("Failed to delete pizza", e));
             });
     }
 }

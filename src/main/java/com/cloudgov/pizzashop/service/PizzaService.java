@@ -65,7 +65,15 @@ public class PizzaService {
                 log.info("[END] getPizzaById - Successfully fetched pizza. Duration: {}ms", duration);
             })
             .doOnError(e -> log.error("[ERROR] getPizzaById - Error fetching pizza with id: {}", id, e))
-            .onErrorMap(e -> e instanceof NotFoundException ? e : new RuntimeException("Failed to fetch pizza", e));
+            .onErrorMap(e -> {
+                if (e instanceof NotFoundException) {
+                    return e;
+                }
+                if (e instanceof IllegalArgumentException) {
+                    return new NotFoundException("Invalid pizza ID format: " + id);
+                }
+                return new RuntimeException("Failed to fetch pizza", e);
+            });
     }
 
     /**
@@ -91,9 +99,9 @@ public class PizzaService {
                         long duration = System.currentTimeMillis() - startTime;
                         log.info("[END] createPizza - Successfully created pizza. Duration: {}ms", duration);
                     })
-                    .doOnError(e -> {
+                    .onErrorMap(e -> {
                         log.error("[ERROR] createPizza - Error creating pizza: {}", pizza, e);
-                        throw new RuntimeException("Failed to create pizza", e);
+                        return new RuntimeException("Failed to create pizza", e);
                     });
             });
     }
@@ -105,22 +113,28 @@ public class PizzaService {
      * @param pizza the updated pizza
      * @return a Mono of the updated pizza
      */
-    public Mono<Pizza> updatePizza(String id, Pizza pizza) {
+    public Mono<Pizza> updatePizza(String id, Pizza updatedPizza) {
         log.info("[START] updatePizza - Updating pizza with id: {}", id);
         long startTime = System.currentTimeMillis();
         
         return pizzaRepository.findById(id)
             .switchIfEmpty(Mono.error(new NotFoundException("Pizza not found with id: " + id)))
-            .flatMap(existing -> {
-                log.debug("Updating existing pizza: {}", existing);
-                return pizzaRepository.save(pizza)
+            .flatMap(existingPizza -> {
+                // Update only the fields that are allowed to be updated
+                existingPizza.setName(updatedPizza.getName());
+                existingPizza.setDescription(updatedPizza.getDescription());
+                existingPizza.setToppings(updatedPizza.getToppings());
+                existingPizza.setSizeOptions(updatedPizza.getSizeOptions());
+                existingPizza.setPrice(updatedPizza.getPrice());
+                
+                return pizzaRepository.save(existingPizza)
                     .doOnSuccess(savedPizza -> {
                         long duration = System.currentTimeMillis() - startTime;
                         log.info("[END] updatePizza - Successfully updated pizza. Duration: {}ms", duration);
                     })
-                    .doOnError(e -> {
-                        log.error("[ERROR] updatePizza - Error updating pizza: {}", pizza, e);
-                        throw new RuntimeException("Failed to update pizza", e);
+                    .onErrorMap(e -> {
+                        log.error("[ERROR] updatePizza - Error updating pizza with id: {}", id, e);
+                        return new RuntimeException("Failed to update pizza", e);
                     });
             });
     }
@@ -137,15 +151,21 @@ public class PizzaService {
         
         return pizzaRepository.findById(id)
             .switchIfEmpty(Mono.error(new NotFoundException("Pizza not found with id: " + id)))
-            .flatMap(pizza -> pizzaRepository.delete(pizza)
-                .doOnSuccess(v -> {
-                    long duration = System.currentTimeMillis() - startTime;
-                    log.info("[END] deletePizza - Successfully deleted pizza. Duration: {}ms", duration);
-                })
-                .doOnError(e -> {
-                    log.error("[ERROR] deletePizza - Error deleting pizza: {}", id, e);
-                    throw new RuntimeException("Failed to delete pizza", e);
-                }));
+            .flatMap(pizza -> pizzaRepository.delete(pizza))
+            .doOnSuccess(aVoid -> {
+                long duration = System.currentTimeMillis() - startTime;
+                log.info("[END] deletePizza - Successfully deleted pizza. Duration: {}ms", duration);
+            })
+            .onErrorMap(e -> {
+                log.error("[ERROR] deletePizza - Error deleting pizza with id: {}", id, e);
+                if (e instanceof NotFoundException) {
+                    return e;
+                }
+                if (e instanceof IllegalArgumentException) {
+                    return new NotFoundException("Invalid pizza ID format: " + id);
+                }
+                return new RuntimeException("Failed to delete pizza", e);
+            });
     }
 
     /**

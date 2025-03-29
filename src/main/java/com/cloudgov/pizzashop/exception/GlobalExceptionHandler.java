@@ -11,6 +11,7 @@ import com.cloudgov.pizzashop.exception.ErrorResponse;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.web.server.ServerWebExchange;
+import org.springframework.web.server.ServerWebInputException;
 
 /**
  * Global exception handler for the application.
@@ -72,6 +73,24 @@ public class GlobalExceptionHandler {
         log.error("[ERROR] {} - Validation error: {}", exchange.getRequest().getPath(), message);
         log.debug("Stack trace:", ex);
         return Mono.just(new ErrorResponse(HttpStatus.BAD_REQUEST.value(), message));
+    }
+
+    /**
+     * Handles empty request bodies.
+     * Logs the error and returns a 400 Bad Request response with a clear message.
+     * 
+     * @param ex the Exception that occurred
+     * @param exchange the current ServerWebExchange
+     * @return a Mono containing an ErrorResponse with 400 status
+     */
+    @ExceptionHandler(ServerWebInputException.class)
+    @ResponseStatus(HttpStatus.BAD_REQUEST)
+    public Mono<ErrorResponse> handleEmptyRequestBody(ServerWebInputException ex, ServerWebExchange exchange) {
+        log.error("[ERROR] {} - Request body is empty", exchange.getRequest().getPath());
+        log.debug("Stack trace:", ex);
+        
+        String errorMessage = "Request body cannot be empty. Please provide valid request data.";
+        return Mono.just(new ErrorResponse(HttpStatus.BAD_REQUEST.value(), errorMessage));
     }
 
     /**

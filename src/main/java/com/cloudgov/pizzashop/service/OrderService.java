@@ -42,6 +42,9 @@ public class OrderService {
             .switchIfEmpty(Flux.empty())
             .doOnError(e -> {
                 log.error("[ERROR] getAllOrders - Error fetching orders", e);
+                if (e instanceof IllegalArgumentException) {
+                    throw new NotFoundException("Invalid order data");
+                }
                 throw new RuntimeException("Failed to fetch orders", e);
             })
             .doOnComplete(() -> {
@@ -60,11 +63,18 @@ public class OrderService {
         log.info("[START] getOrdersByStatus - Fetching orders with status: {}", status);
         long startTime = System.currentTimeMillis();
         
+        if (status == null || status.isEmpty()) {
+            throw new IllegalArgumentException("Status is required");
+        }
+        
         return orderRepository.findByStatus(status)
             .doOnNext(order -> log.debug("Found order: {}", order))
             .switchIfEmpty(Flux.empty())
             .doOnError(e -> {
                 log.error("[ERROR] getOrdersByStatus - Error fetching orders by status: {}", status, e);
+                if (e instanceof IllegalArgumentException) {
+                    throw new NotFoundException("Invalid status format");
+                }
                 throw new RuntimeException("Failed to fetch orders by status", e);
             })
             .doOnComplete(() -> {
@@ -90,7 +100,16 @@ public class OrderService {
                 long duration = System.currentTimeMillis() - startTime;
                 log.info("[END] getOrderById - Successfully fetched order. Duration: {}ms", duration);
             })
-            .doOnError(e -> log.error("[ERROR] getOrderById - Error fetching order with id: {}", id, e));
+            .doOnError(e -> log.error("[ERROR] getOrderById - Error fetching order with id: {}", id, e))
+            .onErrorMap(e -> {
+                if (e instanceof NotFoundException) {
+                    return e;
+                }
+                if (e instanceof IllegalArgumentException) {
+                    return new NotFoundException("Invalid order ID format: " + id);
+                }
+                return new RuntimeException("Failed to fetch order", e);
+            });
     }
 
     /**
@@ -110,15 +129,22 @@ public class OrderService {
             throw new IllegalArgumentException("At least one pizza is required");
         }
         
+        if (newOrder.getStatus() == null || newOrder.getStatus().isEmpty()) {
+            newOrder.setStatus("PENDING");
+        }
+        
         newOrder.setTimestamp(new Date());
         return orderRepository.save(newOrder)
             .doOnSuccess(order -> {
                 long duration = System.currentTimeMillis() - startTime;
                 log.info("[END] createOrder - Successfully created order. Duration: {}ms", duration);
             })
-            .doOnError(e -> {
+            .onErrorMap(e -> {
                 log.error("[ERROR] createOrder - Error creating order: {}", newOrder, e);
-                throw new RuntimeException("Failed to create order", e);
+                if (e instanceof IllegalArgumentException) {
+                    return e;
+                }
+                return new RuntimeException("Failed to create order", e);
             });
     }
 
@@ -134,6 +160,10 @@ public class OrderService {
         log.info("[START] updateOrderStatus - Updating order status for order: {} to {}", id, newStatus);
         long startTime = System.currentTimeMillis();
         
+        if (newStatus == null || newStatus.isEmpty()) {
+            throw new IllegalArgumentException("Status is required");
+        }
+        
         return orderRepository.findById(id)
             .switchIfEmpty(Mono.error(new NotFoundException("Order not found with id: " + id)))
             .flatMap(order -> {
@@ -144,7 +174,16 @@ public class OrderService {
                 long duration = System.currentTimeMillis() - startTime;
                 log.info("[END] updateOrderStatus - Successfully updated order status. Duration: {}ms", duration);
             })
-            .doOnError(e -> log.error("[ERROR] updateOrderStatus - Error updating order status: {}", id, e));
+            .onErrorMap(e -> {
+                log.error("[ERROR] updateOrderStatus - Error updating order status: {}", id, e);
+                if (e instanceof NotFoundException) {
+                    return e;
+                }
+                if (e instanceof IllegalArgumentException) {
+                    return new NotFoundException("Invalid status format");
+                }
+                return new RuntimeException("Failed to update order status", e);
+            });
     }
 
     /**
@@ -165,6 +204,15 @@ public class OrderService {
                 long duration = System.currentTimeMillis() - startTime;
                 log.info("[END] cancelOrder - Successfully canceled order. Duration: {}ms", duration);
             })
-            .doOnError(e -> log.error("[ERROR] cancelOrder - Error canceling order: {}", id, e));
+            .onErrorMap(e -> {
+                log.error("[ERROR] cancelOrder - Error canceling order: {}", id, e);
+                if (e instanceof NotFoundException) {
+                    return e;
+                }
+                if (e instanceof IllegalArgumentException) {
+                    return new NotFoundException("Invalid order ID format: " + id);
+                }
+                return new RuntimeException("Failed to cancel order", e);
+            });
     }
 }

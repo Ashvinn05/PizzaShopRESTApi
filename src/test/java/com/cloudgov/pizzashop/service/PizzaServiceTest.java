@@ -16,6 +16,7 @@ import reactor.test.StepVerifier;
 import java.util.List;
 
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
@@ -95,10 +96,25 @@ class PizzaServiceTest {
     @Test
     void shouldThrowNotFoundExceptionWhenIdDoesNotExist() {
         // Given
-        when(pizzaRepository.findById("nonexistent")).thenReturn(Mono.empty());
+        String nonExistentId = "nonexistent";
+        when(pizzaRepository.findById(nonExistentId)).thenReturn(Mono.empty());
 
         // When
-        Mono<Pizza> result = pizzaService.getPizzaById("nonexistent");
+        Mono<Pizza> result = pizzaService.getPizzaById(nonExistentId);
+
+        // Then
+        StepVerifier.create(result)
+            .verifyError(NotFoundException.class);
+    }
+
+    @Test
+    void shouldThrowNotFoundExceptionWhenInvalidIdFormat() {
+        // Given
+        String invalidId = "invalid-id-format";
+        when(pizzaRepository.findById(invalidId)).thenReturn(Mono.error(new IllegalArgumentException("Invalid ID format")));
+
+        // When
+        Mono<Pizza> result = pizzaService.getPizzaById(invalidId);
 
         // Then
         StepVerifier.create(result)
@@ -125,12 +141,13 @@ class PizzaServiceTest {
     }
 
     @Test
-    void shouldThrowExceptionWhenCreatingDuplicatePizza() {
+    void shouldThrowIllegalArgumentExceptionWhenCreatingDuplicatePizza() {
         // Given
         Pizza duplicatePizza = new Pizza();
         duplicatePizza.setName("Duplicate Pizza");
         
-        when(pizzaRepository.findByName(duplicatePizza.getName())).thenReturn(Mono.just(duplicatePizza));
+        when(pizzaRepository.findByName(duplicatePizza.getName()))
+            .thenReturn(Mono.just(new Pizza()));
 
         // When
         Mono<Pizza> result = pizzaService.createPizza(duplicatePizza);
@@ -177,26 +194,67 @@ class PizzaServiceTest {
     }
 
     @Test
-    void shouldDeleteExistingPizza() {
+    void shouldThrowNotFoundExceptionWhenUpdatingWithInvalidIdFormat() {
         // Given
-        when(pizzaRepository.findById(testPizza.getId())).thenReturn(Mono.just(testPizza));
-        when(pizzaRepository.delete(testPizza)).thenReturn(Mono.empty());
+        Pizza invalidPizza = new Pizza();
+        invalidPizza.setId("invalid-id-format");
+        
+        when(pizzaRepository.findById(invalidPizza.getId())).thenReturn(Mono.error(new IllegalArgumentException("Invalid ID format")));
 
         // When
-        Mono<Void> result = pizzaService.deletePizza(testPizza.getId());
+        Mono<Pizza> result = pizzaService.updatePizza(invalidPizza.getId(), invalidPizza);
+
+        // Then
+        StepVerifier.create(result)
+            .verifyError(NotFoundException.class);
+    }
+
+    @Test
+    void shouldDeletePizzaSuccessfully() {
+        // Given
+        String id = "6424c9b8e4b0b3c8c8a2e1d3";
+        Pizza pizza = new Pizza();
+        pizza.setId(id);
+        pizza.setName("Margherita");
+        pizza.setDescription("Classic Margherita pizza");
+        pizza.setPrice(10.99);
+        
+        when(pizzaRepository.findById(id)).thenReturn(Mono.just(pizza));
+        when(pizzaRepository.delete(pizza)).thenReturn(Mono.empty());
+
+        // When
+        Mono<Void> result = pizzaService.deletePizza(id);
 
         // Then
         StepVerifier.create(result)
             .verifyComplete();
+
+        verify(pizzaRepository).findById(id);
+        verify(pizzaRepository).delete(pizza);
     }
 
     @Test
     void shouldThrowNotFoundExceptionWhenDeletingNonExistingPizza() {
         // Given
-        when(pizzaRepository.findById("nonexistent")).thenReturn(Mono.empty());
+        String nonExistentId = "nonexistent";
+        when(pizzaRepository.findById(nonExistentId)).thenReturn(Mono.empty());
 
         // When
-        Mono<Void> result = pizzaService.deletePizza("nonexistent");
+        Mono<Void> result = pizzaService.deletePizza(nonExistentId);
+
+        // Then
+        StepVerifier.create(result)
+            .verifyError(NotFoundException.class);
+    }
+
+    @Test
+    void shouldThrowNotFoundExceptionWhenDeletingWithInvalidIdFormat() {
+        // Given
+        String invalidId = "invalid-id-format";
+        when(pizzaRepository.findById(invalidId)).thenReturn(Mono.error(new IllegalArgumentException("Invalid ID format")));
+
+        // When
+        Mono<Void> result = pizzaService.deletePizza(invalidId);
 
         // Then
         StepVerifier.create(result)

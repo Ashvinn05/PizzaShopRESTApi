@@ -11,6 +11,8 @@ import org.slf4j.LoggerFactory;
 import com.cloudgov.pizzashop.service.OrderService;
 import com.cloudgov.pizzashop.model.Order;
 import com.cloudgov.pizzashop.model.ApiResponse;
+import com.cloudgov.pizzashop.exception.NotFoundException;
+import org.springframework.web.server.ServerWebInputException;
 
 import java.util.List;
 
@@ -47,15 +49,17 @@ public class OrderController {
         
         return orderService.getAllOrders()
             .collectList()
-            .map(orders -> ApiResponse.success(orders))
-            .doOnNext(response -> log.debug("Found orders: {}", response.getData()))
-            .doOnError(e -> {
-                log.error("[ERROR] getAllOrders - Error fetching orders", e);
-                throw new RuntimeException("Failed to fetch orders", e);
-            })
-            .doOnSuccess(response -> {
+            .map(orders -> {
                 long duration = System.currentTimeMillis() - startTime;
                 log.info("[END] getAllOrders - Successfully fetched orders. Duration: {}ms", duration);
+                return ApiResponse.success(orders);
+            })
+            .onErrorMap(e -> {
+                log.error("[ERROR] getAllOrders - Error fetching orders", e);
+                if (e instanceof NotFoundException) {
+                    throw (NotFoundException) e;
+                }
+                throw new RuntimeException("Failed to fetch orders", e);
             });
     }
 
@@ -73,15 +77,17 @@ public class OrderController {
         
         return orderService.getOrdersByStatus(status)
             .collectList()
-            .map(orders -> ApiResponse.success(orders))
-            .doOnNext(response -> log.debug("Found orders: {}", response.getData()))
-            .doOnError(e -> {
-                log.error("[ERROR] getOrdersByStatus - Error fetching orders by status: {}", status, e);
-                throw new RuntimeException("Failed to fetch orders by status", e);
-            })
-            .doOnSuccess(response -> {
+            .map(orders -> {
                 long duration = System.currentTimeMillis() - startTime;
                 log.info("[END] getOrdersByStatus - Successfully fetched orders. Duration: {}ms", duration);
+                return ApiResponse.success(orders);
+            })
+            .onErrorMap(e -> {
+                log.error("[ERROR] getOrdersByStatus - Error fetching orders by status: {}", status, e);
+                if (e instanceof NotFoundException) {
+                    throw (NotFoundException) e;
+                }
+                throw new RuntimeException("Failed to fetch orders by status", e);
             });
     }
 
@@ -99,14 +105,20 @@ public class OrderController {
         long startTime = System.currentTimeMillis();
         
         return orderService.getOrderById(id)
-            .map(order -> ApiResponse.success(order))
-            .doOnNext(response -> {
+            .map(order -> {
                 long duration = System.currentTimeMillis() - startTime;
                 log.info("[END] getOrderById - Successfully fetched order. Duration: {}ms", duration);
+                return ApiResponse.success(order);
             })
-            .doOnError(e -> {
+            .onErrorResume(e -> {
                 log.error("[ERROR] getOrderById - Error fetching order with id: {}", id, e);
-                throw new RuntimeException("Failed to fetch order", e);
+                if (e instanceof NotFoundException) {
+                    return Mono.error(e);
+                }
+                if (e instanceof IllegalArgumentException) {
+                    return Mono.error(e);
+                }
+                return Mono.error(new RuntimeException("Failed to fetch order", e));
             });
     }
 
@@ -121,18 +133,25 @@ public class OrderController {
     @PostMapping
     @ResponseStatus(HttpStatus.CREATED)
     public Mono<ApiResponse<Order>> createOrder(@Valid @RequestBody Order newOrder) {
+        if (newOrder == null) {
+            throw new ServerWebInputException("Request body cannot be empty");
+        }
+        
         log.info("[START] createOrder - Handling POST request to create order: {}", newOrder);
         long startTime = System.currentTimeMillis();
         
         return orderService.createOrder(newOrder)
-            .map(order -> ApiResponse.success(order, "Order created successfully"))
-            .doOnNext(response -> {
+            .map(order -> {
                 long duration = System.currentTimeMillis() - startTime;
                 log.info("[END] createOrder - Successfully created order. Duration: {}ms", duration);
+                return ApiResponse.success(order, "Order created successfully");
             })
-            .doOnError(e -> {
+            .onErrorResume(e -> {
                 log.error("[ERROR] createOrder - Error creating order: {}", newOrder, e);
-                throw new RuntimeException("Failed to create order", e);
+                if (e instanceof IllegalArgumentException) {
+                    return Mono.error(e);
+                }
+                return Mono.error(new RuntimeException("Failed to create order", e));
             });
     }
 
@@ -146,18 +165,28 @@ public class OrderController {
      */
     @PutMapping("/{id}/status")
     public Mono<ApiResponse<Order>> updateOrderStatus(@PathVariable String id, @RequestParam String status) {
+        if (status == null || status.isEmpty()) {
+            throw new ServerWebInputException("Status parameter cannot be empty");
+        }
+        
         log.info("[START] updateOrderStatus - Handling PUT request to update order status for order: {} to {}", id, status);
         long startTime = System.currentTimeMillis();
         
         return orderService.updateOrderStatus(id, status)
-            .map(order -> ApiResponse.success(order, "Order status updated successfully"))
-            .doOnNext(response -> {
+            .map(order -> {
                 long duration = System.currentTimeMillis() - startTime;
                 log.info("[END] updateOrderStatus - Successfully updated order status. Duration: {}ms", duration);
+                return ApiResponse.success(order, "Order status updated successfully");
             })
-            .doOnError(e -> {
+            .onErrorResume(e -> {
                 log.error("[ERROR] updateOrderStatus - Error updating order status: {}", id, e);
-                throw new RuntimeException("Failed to update order status", e);
+                if (e instanceof NotFoundException) {
+                    return Mono.error(e);
+                }
+                if (e instanceof IllegalArgumentException) {
+                    return Mono.error(e);
+                }
+                return Mono.error(new RuntimeException("Failed to update order status", e));
             });
     }
 
@@ -169,19 +198,30 @@ public class OrderController {
      * @return Mono containing ApiResponse with a success message
      */
     @DeleteMapping("/{id}")
-    public Mono<ApiResponse<String>> cancelOrder(@PathVariable String id) {
+    @ResponseStatus(HttpStatus.NO_CONTENT)
+    public Mono<ApiResponse<Void>> cancelOrder(@PathVariable String id) {
+        if (id == null || id.isEmpty()) {
+            throw new ServerWebInputException("ID parameter cannot be empty");
+        }
+        
         log.info("[START] cancelOrder - Handling DELETE request to cancel order with id: {}", id);
         long startTime = System.currentTimeMillis();
         
         return orderService.cancelOrder(id)
-            .then(Mono.just(ApiResponse.success("", "Order cancelled successfully")))
+            .then(Mono.just(ApiResponse.success((Void)null, "Order cancelled successfully")))
             .doOnNext(response -> {
                 long duration = System.currentTimeMillis() - startTime;
-                log.info("[END] cancelOrder - Successfully canceled order. Duration: {}ms", duration);
+                log.info("[END] cancelOrder - Successfully cancelled order. Duration: {}ms", duration);
             })
-            .doOnError(e -> {
-                log.error("[ERROR] cancelOrder - Error canceling order: {}", id, e);
-                throw new RuntimeException("Failed to cancel order", e);
+            .onErrorResume(e -> {
+                log.error("[ERROR] cancelOrder - Error cancelling order: {}", id, e);
+                if (e instanceof NotFoundException) {
+                    return Mono.error(e);
+                }
+                if (e instanceof IllegalArgumentException) {
+                    return Mono.error(e);
+                }
+                return Mono.error(new RuntimeException("Failed to cancel order", e));
             });
     }
 }
